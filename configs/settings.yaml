@@ -1,0 +1,59 @@
+project_name: "indic-multilingual-rag"
+supported_languages: ["sa", "hi", "mr", "gu", "en"]
+
+paths:
+  raw_dir: "data/raw"
+  quarantine_dir: "data/quarantine"
+  staging_dir: "data/staging"
+  eval_dir: "data/eval"
+  models_dir: "data/models"
+
+ingestion:
+  chunk_size_tokens: 300
+  chunk_overlap_tokens: 45
+  quarantine_legacy_fonts: true
+  separators:
+    - "\n\n"
+    - "\n"
+    - "॥"   # Deergha Viram (Sanskrit/Hindi/Marathi shloka boundary)
+    - "।"   # Poorna Viram (Devanagari sentence boundary)
+    - "."   # Gujarati & English sentence boundary
+    - "?"
+    - "!"
+
+embedding:
+  provider: "embeddinggemma-2"        # Options: "embeddinggemma-2" | "bge-m3" | "hash-fallback"
+  model_id: "google/embeddinggemma-2" # Or "BAAI/bge-m3"
+  precision: "bfloat16"               # CRITICAL: Never use float16 with EmbeddingGemma 2
+  mrl_dimension: 512                  # Gemma 2: 768, 512, 256, 128 | bge-m3: 1024
+  batch_size: 32
+  allow_hash_fallback: true           # Deterministic offline embedder when HF weights are unavailable
+
+vector_db:
+  host: "localhost"
+  port: 6333
+  grpc_port: 6334
+  api_key: null
+  prefer_grpc: false
+  collection_name: "indic_knowledge_v1"
+  enable_bm25_sparse: true            # Uses Qdrant/bm25 for exact Sanskrit/Indic noun matching
+  local_path: "data/qdrant_local"     # On-disk fallback if the Qdrant server is unreachable
+  rrf_k: 60                           # Reciprocal Rank Fusion constant for hybrid search
+
+api:
+  host: "0.0.0.0"
+  port: 8000
+  cors_origins: ["*"]
+
+studio:
+  host: "0.0.0.0"
+  port: 7860
+  share: false
+
+retrieval:
+  top_k_dense: 20
+  top_k_sparse: 20
+  final_k: 5
+
+logging:
+  config_path: "configs/logging.yaml"
